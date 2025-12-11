@@ -1,0 +1,22 @@
+# 数据集
+dataset/
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# 虚拟环境
+venv/
+env/
+ENV/
+.venv
+
+# IDE 配置
+.vscode/
+.idea/
+
+# 其他
+.DS_Store
+*.log
