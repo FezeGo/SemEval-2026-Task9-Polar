@@ -111,47 +111,6 @@ def preprocess_dataframe(df: pd.DataFrame, split: str = "train") -> pd.DataFrame
     df = df.reset_index(drop=True)
     return df
 
-# def create_stratified_split(
-#     df: pd.DataFrame,
-#     val_size: float = 0.15,
-#     seed: int = 42,
-# ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-
-#     if "lang" not in df.columns or "polarization" not in df.columns:
-#         raise ValueError("DataFrame must contain 'lang' and 'polarization' columns.")
-
-#     df = df.copy()
-#     df["polarization"] = df["polarization"].astype(int)
-
-#     df["strat_col"] = df["lang"] + "_" + df["polarization"].astype(str)
-
-#     train_df, val_df = train_test_split(
-#         df,
-#         test_size=val_size,
-#         random_state=seed,
-#         stratify=df["strat_col"],
-#     )
-
-#     train_df = train_df.drop(columns=["strat_col"]).reset_index(drop=True)
-#     val_df = val_df.drop(columns=["strat_col"]).reset_index(drop=True)
-
-#     print("\n[INFO] Per-language polarization rate (train vs. val):")
-#     for lang_code in sorted(df["lang"].unique()):
-#         train_lang = train_df[train_df["lang"] == lang_code]
-#         val_lang = val_df[val_df["lang"] == lang_code]
-
-#         train_pol_pct = train_lang["polarization"].mean() * 100 if len(train_lang) > 0 else 0
-#         val_pol_pct = val_lang["polarization"].mean() * 100 if len(val_lang) > 0 else 0
-
-#         print(
-#             f"{lang_code:>3s} | "
-#             f"train: {len(train_lang):5d} samples, {train_pol_pct:5.2f}% polarized | "
-#             f"val: {len(val_lang):5d} samples, {val_pol_pct:5.2f}% polarized"
-#         )
-
-#     return train_df, val_df
-
-
 def create_stratified_split(
     df: pd.DataFrame,
     val_size: float = 0.15,
