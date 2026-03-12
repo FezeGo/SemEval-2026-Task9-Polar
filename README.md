@@ -1,32 +1,33 @@
-# SemEval2026-Task9-Polar
+# YEZE at SemEval-2026 Task 9: Detecting Multilingual, Multicultural and Multievent Online Polarization
 
-This repository contains our implementation for **SemEval 2026 Task 9: Detecting Multilingual, Multicultural and Multievent Online Polarization**.
+This repository contains the official implementation of the **YEZE** system for **SemEval-2026 Task 9: Detecting Multilingual, Multicultural and Multievent Online Polarization**.
 
 🔗 Official task website:  
 https://polar-semeval.github.io
 
-Our system adopts a **unified multilingual modeling framework** based on **mDeBERTa-v3**, supporting more than 20 languages and addressing multiple subtasks under the polarization detection setting.
+📦 Official dataset repository:  
+https://github.com/Polar-SemEval/data-public/
 
----
+Our system follows a **unified multilingual framework** based on **XLM-RoBERTa-large** and **mDeBERTa-v3-base**, supporting all official languages and all subtasks under the polarization detection setting.
+
 
 ## 📌 Task Overview
 
 SemEval-2026 Task 9 focuses on detecting **polarization in online social media posts** under multilingual, multicultural, and multievent scenarios.
 
-The task consists of multiple subtasks:
+The task consists of three subtasks:
 
-- **Subtask 1**: Polarization Detection (Binary Classification)
-- **Subtask 2**: Polarization Type Classification (Multi-label Classification)
+- **Subtask 1**: Polarization Detection (**binary classification**)
+- **Subtask 2**: Polarization Target Type (**multi-label classification**)
+- **Subtask 3**: Polarization Manifestation (**multi-label classification**)
 
 Key challenges include:
+- strong **cross-lingual distribution shift**
+- **low-resource languages**
+- cultural and event diversity
+- severe **label imbalance**
+- implicit and nuanced polarization expressions
 
-- Strong **cross-lingual distribution shift**
-- **Low-resource languages**
-- Cultural and event diversity
-- Severe **label imbalance**
-- Implicit and nuanced polarization expressions
-
----
 
 ## 🌍 Supported Languages
 
@@ -35,131 +36,129 @@ The official dataset includes the following 22 languages:
 - Amharic (`amh`)
 - Arabic (`arb`)
 - Bengali (`ben`)
-- German (`deu`)
+- Burmese (`mya`)
+- Chinese (`zho`)
 - English (`eng`)
-- Persian (`fas`)
+- German (`deu`)
 - Hausa (`hau`)
 - Hindi (`hin`)
 - Italian (`ita`)
 - Khmer (`khm`)
-- Burmese (`mya`)
 - Nepali (`nep`)
-- Oriya (`ori`)
-- Punjabi (`pan`)
+- Odia (`ori`)
+- Persian (`fas`)
 - Polish (`pol`)
+- Punjabi (`pan`)
 - Russian (`rus`)
 - Spanish (`spa`)
 - Swahili (`swa`)
 - Telugu (`tel`)
 - Turkish (`tur`)
 - Urdu (`urd`)
-- Chinese (`zho`)
 
----
+> Note: In the official setting, **Subtasks 1–2** cover all 22 languages. **Subtask 3** is evaluated on **18 languages** (excluding `ita`/`pol`/`rus`/`mya` in the official release).
 
-## 🧠 Model Overview
 
-We adopt a **unified multilingual training strategy** shared across all subtasks:
+## 🧠 System Overview
 
-- **Backbone**: `microsoft/mdeberta-v3-base`
-- **Training**: Joint multilingual training
-- **Encoder sharing** across languages and tasks
-- **Evaluation metric**: Macro-F1 (official Codabench metric)
+### Backbones
+- **XLM-RoBERTa-large** (`xlm-roberta-large`)
+- **mDeBERTa-v3-base** (`microsoft/mdeberta-v3-base`)
 
-Common design principles:
+### Modeling choices (high level)
+- **Independent per-subtask models** (no shared multi-task pipeline in the final submission)
+- **Binary relevance** decomposition for multi-label subtasks (S2/S3)
+- **Imbalance-aware training** (class weighting / weighted BCE)
+- **Heterogeneous ensemble** of XLM-R and mDeBERTa via weighted probability averaging
+- **Global threshold** for final decisions (per-label threshold tuning was avoided due to overfitting under extreme sparsity)
 
-- Language-agnostic representation learning
-- Robust text normalization
-- Careful handling of class imbalance
+### Official evaluation metric
+- **Macro-F1** (label-wise Macro-F1 for multi-label subtasks)
 
----
 
-## 📍 Subtask 1: Polarization Detection
+## 📍 Subtask 1: Polarization Detection (Binary)
 
-### 🎯 Task Definition
-
-Subtask 1 aims to determine whether a given post expresses **polarization**.
-
+### Labels
 - `0`: non-polarized  
 - `1`: polarized  
 
-This is a **binary classification task**.
+### Input/Output format (per language)
+- Input: `id,text,...`
+- Output: `id,polarization`
 
----
 
-### 🔧 Modeling Strategy
+## 📍 Subtask 2: Polarization Target Type (Multi-label)
 
-- **Architecture**: mDeBERTa-v3-base + linear classifier
-- **Loss**: Binary Cross-Entropy
-- **Training**: Unified multilingual training across all languages
-- **Split**: Language- and label-stratified train/validation split
-
----
-
-### 📊 Evaluation
-
-- **Metric**: Macro-F1
-- **Analysis**:
-  - Per-language performance
-  - Polarization rate per language
-
----
-
-## 📍 Subtask 2: Polarization Type Classification
-
-### 🎯 Task Definition
-
-Subtask 2 focuses on identifying the **target/type of polarization** in a post.
-
-This is a **multi-label classification task**, where each post may belong to **multiple categories simultaneously**.
-
----
-
-### 🏷️ Labels
-
+### Labels (5)
 | Label | Description |
 |------|------------|
-| Political | Political or ideological polarization |
-| Racial/Ethnic | Racial or ethnic polarization |
-| Religious | Religious polarization |
-| Gender/Sexual | Gender identity or sexual orientation polarization |
-| Other | Other types (e.g., media, economy, institutions) |
+| `political` | Political / ideological polarization |
+| `racial/ethnic` | Racial or ethnic polarization |
+| `religious` | Religious polarization |
+| `gender/sexual` | Gender identity / sexual orientation polarization |
+| `other` | Other target types |
 
-Each instance is represented as a **5-dimensional binary vector**.
+### Output format (per language)
+- Output: `id,political,racial/ethnic,religious,gender/sexual,other` (0/1 per label)
 
----
 
-### 🔧 Modeling Strategy
+## 📍 Subtask 3: Manifestation Identification (Multi-label)
 
-- **Architecture**: mDeBERTa-v3-base + multi-label classification head
-- **Activation**: Sigmoid
-- **Problem type**: `multi_label_classification`
+### Labels (6)
+| Label | Description |
+|------|------------|
+| `stereotype` | Stereotyping / generalizations |
+| `vilification` | Vilifying / demonizing |
+| `dehumanization` | Dehumanizing language |
+| `extreme_language` | Extreme / absolutist / incendiary expressions |
+| `lack_of_empathy` | Lack of empathy |
+| `invalidation` | Dismissing / invalidating others |
 
----
+### Output format (per language)
+- Output: `id,stereotype,vilification,dehumanization,extreme_language,lack_of_empathy,invalidation` (0/1 per label)
 
-### ⚖️ Loss Functions
 
-To handle severe label imbalance, we experiment with:
+## 📂 Dataset Layout (data-public)
 
-- **Weighted Binary Cross-Entropy (BCE)**  
-  - Per-label positive class weights
-- **Focal Loss (BCE-based)**  
-  - Focusing parameter γ = 2.0
-  - Combined with per-label positive weights
+Expected paths (per language CSV):
+- `data-public/train/{lang}.csv`
+- `data-public/dev/{lang}.csv`
+- `data-public/test/{lang}.csv`
 
----
+Example:
+- `data-public/dev/amh.csv`
+- `data-public/train/amh.csv`
+- `data-public/test/amh.csv`
 
-### 📊 Threshold Tuning
+We align all predictions and gold labels by the `id` column.
 
-Instead of using a fixed threshold (0.5), we apply:
 
-- **Per-label threshold tuning**
-- Thresholds optimized on validation Macro-F1
-- Applied during inference on the dev/test set
+## 📤 Submission Format
 
----
+Predictions are generated **per language**, matching the official format:
+- `subtask_1/pred_{lang}.csv`
+- `subtask_2/pred_{lang}.csv`
+- `subtask_3/pred_{lang}.csv`
 
-### 📤 Submission Format
+Each file must contain the `id` column and the required label columns for the corresponding subtask.
 
-Predictions are generated **per language**, following the official submission format:
 
+## 🧪 Reproducibility
+
+Environment (as used in our experiments):
+
+- **Python**: `3.11+`
+- **Core Packages**:
+  - `torch==2.8.0+cu128`
+  - `transformers==4.57.3`
+  - `tokenizers==0.22.2`
+  - `pandas==2.3.2`, `numpy==2.3.3`, `scikit-learn==1.7.2`, `matplotlib==3.10.6`
+  - `wandb==0.23.1`
+
+## 📦 Official Data (with Gold Labels)
+
+The organizers released the official dataset (including gold labels for `dev` and `test`) at:
+
+- https://github.com/Polar-SemEval/data-public/
+
+We use the official CSV files directly and perform evaluation by aligning with gold labels via the `id` field.
